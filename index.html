@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="description" content="反向控制赛车游戏 - 体验与常规相反的驾驶控制方式！">
+    <meta name="keywords" content="赛车游戏,反向控制,Canvas游戏,HTML5游戏">
+    <title>反向控制赛车游戏</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+        
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            color: #fff;
+            overflow: hidden;
+            padding: 20px;
+        }
+        
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            max-width: 900px;
+            width: 100%;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        
+        h1 {
+            font-size: 2.8rem;
+            text-shadow: 0 0 15px #ff7700;
+            color: #fff;
+            margin-bottom: 10px;
+            animation: glow 2s infinite alternate;
+        }
+        
+        .subtitle {
+            font-size: 1.3rem;
+            color: #ffcc00;
+            margin-bottom: 20px;
+        }
+        
+        .game-content {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 30px;
+            width: 100%;
+        }
+        
+        .canvas-container {
+            position: relative;
+            border: 4px solid #ff7700;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 0 25px rgba(255, 119, 0, 0.7);
+            background: #222;
+        }
+        
+        #gameCanvas {
+            background: #0d1b2a;
+            display: block;
+        }
+        
+        .overlay {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            color: #ffcc00;
+        }
+        
+        .controls-container {
+            background: rgba(13, 27, 42, 0.9);
+            border-radius: 12px;
+            padding: 25px;
+            width: 320px;
+            border: 3px solid #00b4d8;
+            box-shadow: 0 0 20px rgba(0, 180, 216, 0.6);
+        }
+        
+        h2 {
+            color: #00b4d8;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 1.8rem;
+            text-shadow: 0 0 8px rgba(0, 180, 216, 0.7);
+        }
+        
+        .control-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 10px 15px;
+            background: rgba(0, 180, 216, 0.2);
+            border-radius: 8px;
+            transition: transform 0.2s;
+        }
+        
+        .control-item:hover {
+            transform: scale(1.03);
+            background: rgba(0, 180, 216, 0.3);
+        }
+        
+        .key {
+            background: linear-gradient(to bottom, #ff9a3c, #ff6600);
+            color: #000;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-weight: bold;
+            min-width: 45px;
+            text-align: center;
+            box-shadow: 0 3px 0 #cc5500;
+        }
+        
+        .action {
+            font-weight: bold;
+            color: #90e0ef;
+            font-size: 1.1rem;
+        }
+        
+        .game-info {
+            background: rgba(13, 27, 42, 0.9);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            width: 100%;
+            border: 3px solid #ff7700;
+            box-shadow: 0 0 20px rgba(255, 119, 0, 0.6);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        
+        .stat {
+            background: rgba(0, 180, 216, 0.2);
+            padding: 12px;
+            border-radius: 8px;
+            min-width: 120px;
+        }
+        
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #ffcc00;
+            margin-top: 5px;
+        }
+        
+        .buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+        }
+        
+        button {
+            background: linear-gradient(to bottom, #00b4d8, #0077b6);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 0 #0077b6;
+        }
+        
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 0 #0077b6;
+        }
+        
+        button:active {
+            transform: translateY(1px);
+            box-shadow: 0 2px 0 #0077b6;
+        }
+
+        /* 触屏控制按钮样式 */
+        .touch-controls {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            width: 160px;
+            z-index: 100;
+        }
+
+        .control-btn {
+            width: 70px;
+            height: 70px;
+            background: rgba(255, 119, 0, 0.8);
+            color: white;
+            border-radius: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2rem;
+            font-weight: bold;
+            box-shadow: 0 0 15px rgba(255, 119, 0, 0.6);
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            transition: all 0.1s;
+            border: 3px solid #ffcc00;
+        }
+
+        .control-btn:active {
+            background: rgba(255, 69, 0, 0.9);
+            transform: scale(0.95);
+            box-shadow: 0 0 20px rgba(255, 69, 0, 0.8);
+        }
+
+        /* 移动端优化 */
+        @media (max-width: 768px) {
+            .touch-controls {
+                width: 140px;
+            }
+            .control-btn {
+                width: 60px;
+                height: 60px;
+                font-size: 1.8rem;
+            }
+        }
+
+        #restartBtn {
+            background: linear-gradient(to bottom, #ff9a3c, #ff6600);
+            box-shadow: 0 4px 0 #cc5500;
+        }
+        
+        #helpBtn {
+            background: linear-gradient(to bottom, #6a4c93, #4a2c82);
+            box-shadow: 0 4px 0 #3a2168;
+        }
+        
+        .instructions {
+            margin-top: 20px;
+            font-size: 1rem;
+            color: #caf0f8;
+            text-align: center;
+            line-height: 1.5;
+        }
+        
+        @keyframes glow {
+            from {
+                text-shadow: 0 0 10px #ff7700;
+            }
+            to {
+                text-shadow: 0 0 20px #ff7700, 0 0 30px #ff5500;
+            }
+        }
+        
+        @keyframes roadMove {
+            from {
+                background-position: 0 0;
+            }
+            to {
+                background-position: 0 100%;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .game-content {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .controls-container {
+                width: 100%;
+                max-width: 400px;
+            }
+            
+            .stats {
+                flex-direction: column;
+                gap: 10px;
+                align-items: center;
+            }
+            
+            .stat {
+                width: 100%;
+                max-width: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <header>
+            <h1>反向控制赛车游戏</h1>
+            <p class="subtitle">体验与常规相反的驾驶控制方式！</p>
+        </header>
+        
+        <div class="game-content">
+            <div class="canvas-container">
+                <canvas id="gameCanvas" width="600" height="500"></canvas>
+                <div class="overlay">速度: <span id="speed">0</span> km/h</div>
+            </div>
+            
+            <div class="controls-container">
+                <h2>控制说明</h2>
+                <div class="control-item">
+                    <span class="key">↓</span>
+                    <span class="action">向前移动</span>
+                </div>
+                <div class="control-item">
+                    <span class="key">↑</span>
+                    <span class="action">向后移动</span>
+                </div>
+                <div class="control-item">
+                    <span class="key">→</span>
+                    <span class="action">向左转向</span>
+                </div>
+                <div class="control-item">
+                    <span class="key">←</span>
+                    <span class="action">向右转向</span>
+                </div>
+                
+                <div class="instructions">
+                    <p>注意：这是一个反向控制游戏！</p>
+                    <p>所有操作都与常规驾驶相反，挑战你的反应能力！</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="game-info">
+            <div class="stats">
+                <div class="stat">
+                    <div>行驶距离</div>
+                    <div class="stat-value" id="distance">0m</div>
+                </div>
+                <div class="stat">
+                    <div>游戏时间</div>
+                    <div class="stat-value" id="time">0s</div>
+                </div>
+                <div class="stat">
+                    <div>碰撞次数</div>
+                    <div class="stat-value" id="collisions">0</div>
+                </div>
+            </div>
+            
+            <div class="buttons">
+                <button id="restartBtn">重新开始</button>
+                <button id="helpBtn">游戏帮助</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 触屏控制按钮 -->
+    <div id="touch-controls" class="touch-controls">
+        <div class="control-btn" id="btn-up">↑</div>
+        <div class="control-btn" id="btn-down">↓</div>
+        <div class="control-btn" id="btn-left">←</div>
+        <div class="control-btn" id="btn-right">→</div>
+    </div>
+
+    <script>
+        // 获取Canvas和上下文
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const speedDisplay = document.getElementById('speed');
+        const distanceDisplay = document.getElementById('distance');
+        const timeDisplay = document.getElementById('time');
+        const collisionsDisplay = document.getElementById('collisions');
+        const restartBtn = document.getElementById('restartBtn');
+        const helpBtn = document.getElementById('helpBtn');
+        
+        // 获取触屏控制按钮
+        const btnUp = document.getElementById('btn-up');
+        const btnDown = document.getElementById('btn-down');
+        const btnLeft = document.getElementById('btn-left');
+        const btnRight = document.getElementById('btn-right');
+
+        // 游戏变量
+        let gameTime = 0;
+        let distance = 0;
+        let collisions = 0;
+        let lastTimestamp = 0;
+
+        // 赛车对象
+        const car = {
+            x: canvas.width / 2,
+            y: canvas.height - 100,
+            width: 40,
+            height: 70,
+            speed: 0,
+            maxSpeed: 8,
+            acceleration: 0.15,
+            deceleration: 0.1,
+            rotation: 0, // 角度制，0表示向上
+            rotationSpeed: 4,
+            color: '#e63946',
+            drifting: false
+        };
+
+        // 赛道
+        const road = {
+            x: 100,
+            y: 0,
+            width: canvas.width - 200,
+            height: canvas.height,
+            color: '#4a4e69',
+            lineColor: '#f1faee',
+            lineWidth: 10,
+            lineLength: 40,
+            lineGap: 30
+        };
+
+        // 障碍物
+        const obstacles = [
+            {x: 200, y: 300, width: 50, height: 50, color: '#9a8c98'},
+            {x: 350, y: 150, width: 60, height: 60, color: '#9a8c98'},
+            {x: 450, y: 400, width: 55, height: 55, color: '#9a8c98'},
+            {x: 150, y: 200, width: 45, height: 45, color: '#9a8c98'}
+        ];
+
+        // 粒子效果
+        const particles = [];
+
+        // 按键状态
+        const keys = {
+            ArrowUp: false,
+            ArrowDown: false,
+            ArrowLeft: false,
+            ArrowRight: false
+        };
+
+        // 游戏状态
+        let gameRunning = true;
+
+        // 监听按键事件
+        window.addEventListener('keydown', (e) => {
+            if (keys.hasOwnProperty(e.key)) {
+                keys[e.key] = true;
+                e.preventDefault();
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            if (keys.hasOwnProperty(e.key)) {
+                keys[e.key] = false;
+                e.preventDefault();
+            }
+        });
+
+        // 触屏控制事件监听器
+        // 为移动设备添加触摸事件
+        function setupTouchControls() {
+            // 向前移动 (向下键)
+            btnDown.addEventListener('touchstart', (e) => {
+                keys.ArrowDown = true;
+                e.preventDefault();
+            });
+            btnDown.addEventListener('touchend', (e) => {
+                keys.ArrowDown = false;
+                e.preventDefault();
+            });
+            
+            // 向后移动 (向上键)
+            btnUp.addEventListener('touchstart', (e) => {
+                keys.ArrowUp = true;
+                e.preventDefault();
+            });
+            btnUp.addEventListener('touchend', (e) => {
+                keys.ArrowUp = false;
+                e.preventDefault();
+            });
+            
+            // 向左转向 (右键)
+            btnRight.addEventListener('touchstart', (e) => {
+                keys.ArrowRight = true;
+                e.preventDefault();
+            });
+            btnRight.addEventListener('touchend', (e) => {
+                keys.ArrowRight = false;
+                e.preventDefault();
+            });
+            
+            // 向右转向 (左键)
+            btnLeft.addEventListener('touchstart', (e) => {
+                keys.ArrowLeft = true;
+                e.preventDefault();
+            });
+            btnLeft.addEventListener('touchend', (e) => {
+                keys.ArrowLeft = false;
+                e.preventDefault();
+            });
+            
+            // 为桌面设备添加鼠标事件
+            btnDown.addEventListener('mousedown', (e) => {
+                keys.ArrowDown = true;
+                e.preventDefault();
+            });
+            btnDown.addEventListener('mouseup', (e) => {
+                keys.ArrowDown = false;
+                e.preventDefault();
+            });
+            btnDown.addEventListener('mouseleave', (e) => {
+                keys.ArrowDown = false;
+                e.preventDefault();
+            });
+            
+            btnUp.addEventListener('mousedown', (e) => {
+                keys.ArrowUp = true;
+                e.preventDefault();
+            });
+            btnUp.addEventListener('mouseup', (e) => {
+                keys.ArrowUp = false;
+                e.preventDefault();
+            });
+            btnUp.addEventListener('mouseleave', (e) => {
+                keys.ArrowUp = false;
+                e.preventDefault();
+            });
+            
+            btnRight.addEventListener('mousedown', (e) => {
+                keys.ArrowRight = true;
+                e.preventDefault();
+            });
+            btnRight.addEventListener('mouseup', (e) => {
+                keys.ArrowRight = false;
+                e.preventDefault();
+            });
+            btnRight.addEventListener('mouseleave', (e) => {
+                keys.ArrowRight = false;
+                e.preventDefault();
+            });
+            
+            btnLeft.addEventListener('mousedown', (e) => {
+                keys.ArrowLeft = true;
+                e.preventDefault();
+            });
+            btnLeft.addEventListener('mouseup', (e) => {
+                keys.ArrowLeft = false;
+                e.preventDefault();
+            });
+            btnLeft.addEventListener('mouseleave', (e) => {
+                keys.ArrowLeft = false;
+                e.preventDefault();
+            });
+        }
+
+        // 重新开始游戏
+        restartBtn.addEventListener('click', () => {
+            resetGame();
+        });
+
+        // 显示游戏帮助
+        helpBtn.addEventListener('click', () => {
+            alert('反向控制赛车游戏说明：\n\n↓ 下箭头：向前移动\n↑ 上箭头：向后移动\n→ 右箭头：向左转向\n← 左箭头：向右转向\n\n尝试在赛道内驾驶，不要撞到障碍物！\n体验反向控制的乐趣！');
+        });
+
+        // 重置游戏
+        function resetGame() {
+            car.x = canvas.width / 2;
+            car.y = canvas.height - 100;
+            car.speed = 0;
+            car.rotation = 0;
+            gameTime = 0;
+            distance = 0;
+            collisions = 0;
+            gameRunning = true;
+            particles.length = 0;
+            lastTimestamp = 0;
+            
+            updateDisplays();
+        }
+
+        // 更新显示
+        function updateDisplays() {
+            speedDisplay.textContent = Math.abs(Math.round(car.speed * 30));
+            distanceDisplay.textContent = Math.round(distance) + 'm';
+            timeDisplay.textContent = Math.round(gameTime) + 's';
+            collisionsDisplay.textContent = collisions;
+        }
+
+        // 创建粒子效果
+        function createParticles(x, y, color, count) {
+            for (let i = 0; i < count; i++) {
+                particles.push({
+                    x: x,
+                    y: y,
+                    size: Math.random() * 5 + 2,
+                    speedX: (Math.random() - 0.5) * 5,
+                    speedY: (Math.random() - 0.5) * 5,
+                    color: color,
+                    life: 30
+                });
+            }
+        }
+
+        // 更新粒子
+        function updateParticles() {
+            for (let i = 0; i < particles.length; i++) {
+                const p = particles[i];
+                p.x += p.speedX;
+                p.y += p.speedY;
+                p.life--;
+                
+                if (p.life <= 0) {
+                    particles.splice(i, 1);
+                    i--;
+                }
+            }
+        }
+
+        // 绘制粒子
+        function drawParticles() {
+            for (const p of particles) {
+                ctx.globalAlpha = p.life / 30;
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.globalAlpha = 1;
+        }
+
+        // 检查碰撞
+        function checkCollision(rect1, rect2) {
+            return rect1.x < rect2.x + rect2.width &&
+                   rect1.x + rect1.width > rect2.x &&
+                   rect1.y < rect2.y + rect2.height &&
+                   rect1.y + rect1.height > rect2.y;
+        }
+
+        // 更新游戏状态
+        function update(timestamp) {
+            if (!gameRunning) return;
+            
+            // 计算时间增量
+            const deltaTime = lastTimestamp ? (timestamp - lastTimestamp) / 1000 : 0;
+            lastTimestamp = timestamp;
+            
+            if (deltaTime > 0) {
+                gameTime += deltaTime;
+            }
+            
+            // 处理反向控制
+            // 向下键 - 加速向前
+            if (keys.ArrowDown) {
+                car.speed += car.acceleration;
+                if (car.speed > car.maxSpeed) car.speed = car.maxSpeed;
+                
+                // 创建加速粒子
+                if (car.speed > 1 && Math.random() > 0.7) {
+                    const rad = car.rotation * Math.PI / 180;
+                    createParticles(
+                        car.x + car.width/2 + Math.sin(rad) * car.height/2,
+                        car.y + car.height/2 - Math.cos(rad) * car.height/2,
+                        '#ffaa00',
+                        1
+                    );
+                }
+            }
+            
+            // 向上键 - 减速或向后
+            if (keys.ArrowUp) {
+                car.speed -= car.acceleration;
+                if (car.speed < -car.maxSpeed/2) car.speed = -car.maxSpeed/2;
+            }
+            
+            // 如果没有按加速或减速键，逐渐减速
+            if (!keys.ArrowDown && !keys.ArrowUp) {
+                if (car.speed > 0) {
+                    car.speed -= car.deceleration;
+                    if (car.speed < 0) car.speed = 0;
+                } else if (car.speed < 0) {
+                    car.speed += car.deceleration;
+                    if (car.speed > 0) car.speed = 0;
+                }
+            }
+            
+            // 右箭头 - 向左转向
+            if (keys.ArrowRight) {
+                car.rotation -= car.rotationSpeed * (car.speed !== 0 ? Math.abs(car.speed)/2 : 1);
+            }
+            
+            // 左箭头 - 向右转向
+            if (keys.ArrowLeft) {
+                car.rotation += car.rotationSpeed * (car.speed !== 0 ? Math.abs(car.speed)/2 : 1);
+            }
+            
+            // 更新位置
+            const rad = car.rotation * Math.PI / 180;
+            car.x += car.speed * Math.sin(rad);
+            car.y -= car.speed * Math.cos(rad);
+            
+            // 更新行驶距离
+            if (car.speed > 0) {
+                distance += car.speed;
+            }
+            
+            // 检查边界碰撞
+            if (car.x < road.x || car.x + car.width > road.x + road.width ||
+                car.y < road.y || car.y + car.height > road.y + road.height) {
+                car.speed *= 0.7; // 碰撞时减速
+                createParticles(car.x + car.width/2, car.y + car.height/2, '#ffffff', 10);
+                collisions++;
+            }
+            
+            // 检查障碍物碰撞
+            for (const obstacle of obstacles) {
+                if (checkCollision(car, obstacle)) {
+                    car.speed *= 0.5; // 碰撞障碍物时大幅减速
+                    // 将车推离障碍物
+                    const dx = car.x + car.width/2 - (obstacle.x + obstacle.width/2);
+                    const dy = car.y + car.height/2 - (obstacle.y + obstacle.height/2);
+                    car.x += dx * 0.1;
+                    car.y += dy * 0.1;
+                    createParticles(car.x + car.width/2, car.y + car.height/2, '#ff6600', 15);
+                    collisions++;
+                }
+            }
+            
+            // 更新粒子
+            updateParticles();
+            
+            // 更新显示
+            updateDisplays();
+        }
+
+        // 绘制赛道
+        function drawRoad() {
+            // 绘制路面
+            ctx.fillStyle = road.color;
+            ctx.fillRect(road.x, road.y, road.width, road.height);
+            
+            // 绘制中心线
+            ctx.fillStyle = road.lineColor;
+            for (let y = road.y; y < road.height; y += road.lineLength + road.lineGap) {
+                const offset = (gameTime * 100) % (road.lineLength + road.lineGap);
+                ctx.fillRect(road.x + road.width/2 - road.lineWidth/2, y - offset, road.lineWidth, road.lineLength);
+            }
+            
+            // 绘制路边
+            ctx.fillStyle = '#333';
+            ctx.fillRect(road.x - 20, road.y, 20, road.height);
+            ctx.fillRect(road.x + road.width, road.y, 20, road.height);
+        }
+
+        // 绘制障碍物
+        function drawObstacles() {
+            for (const obstacle of obstacles) {
+                ctx.fillStyle = obstacle.color;
+                ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+                
+                // 添加高光效果
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                ctx.fillRect(obstacle.x + 5, obstacle.y + 5, obstacle.width - 10, 10);
+                ctx.fillRect(obstacle.x + 5, obstacle.y + 5, 10, obstacle.height - 10);
+            }
+        }
+
+        // 绘制赛车
+        function drawCar() {
+            // 保存当前状态
+            ctx.save();
+            
+            // 平移和旋转到赛车的位置和角度
+            ctx.translate(car.x + car.width/2, car.y + car.height/2);
+            ctx.rotate(car.rotation * Math.PI / 180);
+            
+            // 绘制赛车主体
+            ctx.fillStyle = car.color;
+            ctx.fillRect(-car.width/2, -car.height/2, car.width, car.height);
+            
+            // 绘制车窗
+            ctx.fillStyle = '#1d3557';
+            ctx.fillRect(-car.width/2 + 5, -car.height/2 + 5, car.width - 10, car.height/3);
+            
+            // 绘制车灯
+            ctx.fillStyle = '#ffdd00';
+            ctx.fillRect(-car.width/2 + 5, -car.height/2 + car.height - 10, 8, 5);
+            ctx.fillRect(car.width/2 - 13, -car.height/2 + car.height - 10, 8, 5);
+            
+            // 绘制车轮
+            ctx.fillStyle = '#333';
+            ctx.fillRect(-car.width/2 - 3, -car.height/2 + 10, 5, 15);
+            ctx.fillRect(-car.width/2 - 3, -car.height/2 + car.height - 25, 5, 15);
+            ctx.fillRect(car.width/2 - 2, -car.height/2 + 10, 5, 15);
+            ctx.fillRect(car.width/2 - 2, -car.height/2 + car.height - 25, 5, 15);
+            
+            // 恢复状态
+            ctx.restore();
+        }
+
+        // 绘制游戏场景
+        function draw() {
+            // 清除画布
+            ctx.fillStyle = '#0d1b2a';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // 绘制赛道
+            drawRoad();
+            
+            // 绘制障碍物
+            drawObstacles();
+            
+            // 绘制粒子
+            drawParticles();
+            
+            // 绘制赛车
+            drawCar();
+        }
+
+        // 游戏循环
+        function gameLoop(timestamp) {
+            if (!document.hidden) {
+                update(timestamp);
+                draw();
+            }
+            requestAnimationFrame(gameLoop);
+        }
+
+        // 确保DOM加载完成后再启动游戏
+        document.addEventListener('DOMContentLoaded', function() {
+            try {
+                // 检查Canvas支持
+                if (!ctx) {
+                    throw new Error('浏览器不支持Canvas');
+                }
+                
+                // 初始化并启动游戏
+                resetGame();
+                setupTouchControls(); // 设置触屏控制
+                gameLoop();
+                
+                console.log('游戏已成功启动');
+            } catch (error) {
+                console.error('游戏启动失败:', error);
+                // 显示错误信息给用户
+                const errorMsg = document.createElement('div');
+                errorMsg.style.position = 'fixed';
+                errorMsg.style.top = '50%';
+                errorMsg.style.left = '50%';
+                errorMsg.style.transform = 'translate(-50%, -50%)';
+                errorMsg.style.background = 'rgba(255, 0, 0, 0.9)';
+                errorMsg.style.color = 'white';
+                errorMsg.style.padding = '20px';
+                errorMsg.style.borderRadius = '10px';
+                errorMsg.style.zIndex = '1000';
+                errorMsg.textContent = '游戏加载失败，请刷新页面重试。';
+                document.body.appendChild(errorMsg);
+            }
+        });
+    </script>
+</body>
+</html>
